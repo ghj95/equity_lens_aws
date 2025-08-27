@@ -1,0 +1,11 @@
+.ipynb_checkpoints
+__pycache__
+*.pyc
+.env
+.venv
+venv/
+.git
+.gitignore
+anaconda_projects
+faiss_index
+*.md
