@@ -39,6 +39,8 @@ EquityLens is an end-to-end LLM-powered news research tool that helps equity res
 - **Terraform**: Infrastructure provisioning and updates
 - **Zero-downtime deployments**: Rolling updates with health checks
 
+![pipeline diagram](serverless-pipeline.png)
+
 ## Tech Stack
 
 ### Application Layer
