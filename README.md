@@ -4,6 +4,8 @@
 
 EquityLens is an end-to-end LLM-powered news research tool that helps equity research analysts efficiently analyze financial news by retrieving, summarizing, and highlighting key market insights. Built with LangChain and OpenAI API, it demonstrates how large language models can streamline research workflows and transform unstructured news into actionable intelligence.
 
+**Deployed on AWS serverless infrastructure with enterprise-grade scalability and reliability.**
+
 ## Features
 
 - **Multi-Article Analysis**: Process up to 3 financial news articles simultaneously
@@ -12,19 +14,48 @@ EquityLens is an end-to-end LLM-powered news research tool that helps equity res
 - **Trend Indicators**: Visual sentiment indicators (Positive, Negative, Neutral)
 - **Source Attribution**: Direct links to original articles with contextual quotes
 - **Vector Search**: FAISS-powered semantic search for accurate information retrieval
+- **Auto-scaling**: Serverless architecture that scales with demand
+- **Global CDN**: Fast worldwide access via CloudFront distribution
 
 ## Live Demo
 
-[Try EquityLens on Streamlit Cloud](https://equity-lens.streamlit.app)
+**[View Live Application on AWS →](https://dfn8hh50ps75m.cloudfront.net)**
+
+*Hosted on AWS ECS Fargate with global CloudFront distribution*
+
+## Architecture
+
+### Cloud Infrastructure
+- **AWS ECS Fargate**: Serverless container orchestration across multiple availability zones
+- **Application Load Balancer**: High availability with automatic failover
+- **CloudFront CDN**: Global content delivery with edge caching
+- **Auto-scaling**: Dynamic container scaling based on demand
+- **Infrastructure as Code**: Complete infrastructure managed via Terraform
+
+### CI/CD Pipeline
+- **AWS CodePipeline**: Automated deployment pipeline
+- **AWS CodeBuild**: Docker image building and testing
+- **Amazon ECR**: Container registry for Docker images
+- **Terraform**: Infrastructure provisioning and updates
+- **Zero-downtime deployments**: Rolling updates with health checks
 
 ## Tech Stack
 
+### Application Layer
 - **Frontend**: Streamlit
 - **LLM**: OpenAI GPT (configurable model)
 - **Framework**: LangChain
 - **Vector Store**: FAISS
 - **Embeddings**: OpenAI text-embedding-3-small
 - **Article Processing**: newspaper3k
+
+### Infrastructure Layer
+- **Container Platform**: AWS ECS with Fargate
+- **Load Balancing**: Application Load Balancer
+- **CDN**: Amazon CloudFront
+- **Container Registry**: Amazon ECR
+- **Infrastructure**: Terraform modules
+- **CI/CD**: AWS CodePipeline + CodeBuild
 
 ## Usage
 
@@ -40,29 +71,22 @@ EquityLens is an end-to-end LLM-powered news research tool that helps equity res
 
 ## Technical Implementation
 
-### Architecture
+### Application Architecture
 - **RAG Framework**: Retrieval-Augmented Generation for accurate, source-backed answers
 - **Document Processing**: Recursive text splitting with optimal chunk sizes (500 chars, 50 overlap)
 - **Vector Store**: FAISS indexing with OpenAI embeddings for semantic search
 - **LLM Integration**: Configurable OpenAI models with RetrievalQAWithSourcesChain
+
+### Cloud Architecture Benefits
+- **High Availability**: Multi-AZ deployment with automatic failover
+- **Scalability**: Auto-scaling containers based on traffic patterns
+- **Performance**: Global CDN ensures low latency worldwide
+- **Cost Optimization**: Pay-per-use serverless model
+- **Security**: VPC isolation with security groups and SSL termination
 
 ### Key Components
 - **Multi-document Analysis**: Processes and synthesizes insights from multiple articles
 - **Source Attribution**: Maintains traceability from answers back to original sources
 - **Real-time Processing**: Dynamic quote extraction and sentiment analysis
 - **Error Handling**: Robust handling for failed URL fetches and API calls
-
-## Performance Considerations
-
-- **Caching**: Streamlit resource caching for LLM initialization
-- **Token Management**: Configurable token limits for cost optimization  
-- **Chunk Strategy**: Optimized text splitting for accurate retrieval
-- **Model Selection**: Flexible model configuration for different use cases
-
-## Future Enhancements
-
-- Real-time news feed integration
-- Historical sentiment tracking
-- Multi-language article support
-- Advanced financial metrics extraction
-- Integration with financial data APIs
+- **Containerization**: Docker-based deployment for consistency and portability
