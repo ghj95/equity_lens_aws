@@ -14,33 +14,33 @@ st.set_page_config(page_title="EquityLens", page_icon="🔍", layout="wide", ini
 
 @st.cache_resource
 def init_resources():
-    # Use Streamlit secrets for production, fallback to env vars for local dev
+    # Streamlit for prod, fallback to env for local
     model_name = st.secrets.get("OPENAI_MODEL", os.getenv("OPENAI_MODEL", "gpt-4o-mini"))
     temperature = float(st.secrets.get("OPENAI_TEMPERATURE", os.getenv("OPENAI_TEMPERATURE", "0.3")))
     max_tokens = int(st.secrets.get("OPENAI_MAX_TOKENS", os.getenv("OPENAI_MAX_TOKENS", "1500")))
     embedding_model = st.secrets.get("OPENAI_EMBEDDING_MODEL", os.getenv("OPENAI_EMBEDDING_MODEL", "text-embedding-3-small"))
     
-    # API key - prioritize Streamlit secrets
+    # API key
     openai_api_key = st.secrets.get("OPENAI_API_KEY", os.getenv("OPENAI_API_KEY"))
     
     if not openai_api_key:
         st.error("OpenAI API key not found. Please set it in Streamlit secrets or environment variables.")
         st.stop()
     
-    # Set key
+    # set key
     os.environ["OPENAI_API_KEY"] = openai_api_key
 
-    # LLM
+    # llm
     llm = ChatOpenAI(
         model_name=model_name,
         temperature=temperature,
         max_tokens=max_tokens
     )
 
-    # Embeddings
+    # embeddings
     embeddings = OpenAIEmbeddings(model=embedding_model)
 
-    # Use temporary directory for vector storage in cloud environment
+    # use temp directory
     vector_path = os.path.join(tempfile.gettempdir(), "faiss_index")
     
     vectorstore = None
@@ -61,21 +61,18 @@ def init_resources():
 
     return llm, embeddings, vectorstore, qa_chain
 
+    # clean parsed text from newspaper3k
 def clean_parsed_text(text):
-    # Add spaces before numbers followed by letters
     text = re.sub(r'(\d+)([a-zA-Z])', r'\1 \2', text)
-    
-    # Add spaces around B,M,compared to
     text = re.sub(r'billion', ' billion ', text)
     text = re.sub(r'million', ' million ', text)
     text = re.sub(r'comparedto', ' compared to ', text)
-    
-    # Remove asterix and cleanup
     text = text.replace('*', '')
     text = re.sub(r'\s+', ' ', text)
     
     return text.strip()
 
+    # prompt engineer source quotes from answer
 def extract_source_quotes(llm, sources, processed_docs, query, answer):
     source_quotes = {}
     
@@ -90,7 +87,7 @@ def extract_source_quotes(llm, sources, processed_docs, query, answer):
             if source in source_to_content:
                 content = source_to_content[source]
                 
-                # Check if uncertain
+                # uncertainty check
                 uncertainty_indicators = ["i don't know", "i'm not sure", "unclear", "cannot determine", "no information", "not mentioned"]
                 answer_lower = answer.lower()
                 is_uncertain = any(indicator in answer_lower for indicator in uncertainty_indicators)
@@ -115,7 +112,7 @@ def extract_source_quotes(llm, sources, processed_docs, query, answer):
                     response = llm.invoke(quote_prompt)
                     quote = response.content.strip().replace('"', '').replace("'", "").replace("Quote:", "").strip()
                     
-                    # Edge cases
+                    # edge cases
                     if not quote or quote.lower() in ["no relevant quote", "no quote found", "none"]:
                         quote = "N/A"
                     elif len(quote) > 300:
@@ -126,22 +123,17 @@ def extract_source_quotes(llm, sources, processed_docs, query, answer):
                 source_quotes[source] = "N/A"
     
     except Exception as e:
-        # Quote is N/A if error
+        # quote is N/A if error in answer
         for source in sources:
             source_quotes[source] = "N/A"
     
     return source_quotes
 
-# Initialize resources
+# init resources
 llm, embeddings, vectorstore, qa_chain = init_resources()
 
-# UI
+# streamlit ui
 st.markdown("## 🔍 EquityLens : *AI-powered news analysis for smarter equity research.*")
-# url = "https://ghj95.github.io/portfolio//"
-# st.markdown(
-#     f"<a href='{url}' target='_blank' style='text-decoration: none; color: inherit;'>`By : Gabriel Hardy-Joseph`</a>",
-#     unsafe_allow_html=True,
-# )
 
 # aws deploy info
 col1, col2, col3 = st.columns([0.45, 0.1, 0.1], gap="small")
@@ -162,7 +154,7 @@ with col3:
        unsafe_allow_html=True
    )
 
-# App description
+# app description
 def appinfo():
     with st.container(border=True):
         st.write(
@@ -202,13 +194,13 @@ def appinfo():
 appinfo()
 st.markdown("---")
 
-# Sidebar
+# sidebar
 st.sidebar.header("News Articles \n (paste URLs below)")
 url1 = st.sidebar.text_input("Source 1")
 url2 = st.sidebar.text_input("Source 2")
 url3 = st.sidebar.text_input("Source 3")
 
-# Fetch article + source
+# fetch article + source
 def fetch_article_document(url: str) -> Document:
     try:
         article = Article(url)
@@ -222,21 +214,21 @@ def fetch_article_document(url: str) -> Document:
         st.warning(f"Error fetching article from {url}: {str(e)}")
         return None
 
-# Store docs in session state
+# store docs in session state
 if 'processed_docs' not in st.session_state:
     st.session_state.processed_docs = []
 
-# Store URL mapping
+# store URL mapping
 if 'url_mapping' not in st.session_state:
     st.session_state.url_mapping = {}
 
-# Store processing status
+# store processing status
 if 'articles_processed' not in st.session_state:
     st.session_state.articles_processed = False
 
-# Process URLs
+# process URLs
 if st.sidebar.button("Process"):
-    # Use temporary directory for cloud environment
+    # use temporary directory for cloud environment
     path = os.path.join(tempfile.gettempdir(), "faiss_index")
     urls = [u for u in [url1, url2, url3] if u]
 
@@ -247,7 +239,7 @@ if st.sidebar.button("Process"):
             with st.spinner("Fetching article texts..."):
                 docs = []
                 url_mapping = {}
-                # Map URLs to position
+                # map URLs to position
                 input_urls = [url1, url2, url3]
                 for i, u in enumerate(input_urls):
                     if u:  
@@ -261,7 +253,7 @@ if st.sidebar.button("Process"):
             if not docs:
                 st.error("No valid article content found. Please check your URLs.")
             else:
-                # Store docs for quote extraction
+                # store docs for quote extraction
                 st.session_state.processed_docs = docs
                 st.session_state.url_mapping = url_mapping
                 
@@ -274,7 +266,7 @@ if st.sidebar.button("Process"):
                     split_docs = text_splitter.split_documents(docs)
 
                 with st.spinner("Embedding into vector database..."):
-                    # Ensure directory exists
+                    # ensure directory exists
                     os.makedirs(path, exist_ok=True)
                     vector = FAISS.from_documents(split_docs, embeddings)
                     vector.save_local(path)
@@ -285,11 +277,11 @@ if st.sidebar.button("Process"):
         except Exception as e:
             st.error("Error processing URLs: The content may be blocked by a paywall. Please try using freely accessible sites instead.")
 
-# Show status
+# show status
 if st.session_state.articles_processed:
     st.success("Articles processed and indexed! Ready for questions.")
 
-# Ask questions
+# ask questions
 vector_path = os.path.join(tempfile.gettempdir(), "faiss_index")
 index_faiss = os.path.join(vector_path, "index.faiss")
 index_pkl = os.path.join(vector_path, "index.pkl")
@@ -318,20 +310,20 @@ if st.session_state.articles_processed and os.path.exists(index_faiss) and os.pa
                 if isinstance(sources, str):
                     sources = [s.strip() for s in sources.replace("\n", ",").split(",") if s.strip()]
 
-                # Extract key quotes
+                # extract key quotes
                 if st.session_state.processed_docs:
                     with st.spinner("Extracting source quotes..."):
                         source_quotes = extract_source_quotes(llm, sources, st.session_state.processed_docs, query, result["answer"])
                         
-                        # Display main answer
+                        # display main answer
                         st.markdown("### 🎯 Answer")
                         st.write(result['answer'])
                         
-                        # Display sources
+                        # display sources
                         for src in sources:
                             quote = source_quotes.get(src, "N/A")
                             if quote != "N/A":
-                                # Get correct source number
+                                # get correct source number
                                 source_label = st.session_state.url_mapping.get(src, "Unknown Source")
                                 with st.container(border=True):
                                     st.markdown(f"**Quote:** \"{quote}\"")
